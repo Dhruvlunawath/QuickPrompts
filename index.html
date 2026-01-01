@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QuickPrompts - AI Content Prompt Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0f0f1e;
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(138, 43, 226, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, rgba(255, 0, 255, 0.15) 0%, transparent 50%),
+                  radial-gradient(circle at 20% 80%, rgba(0, 191, 255, 0.1) 0%, transparent 50%);
+      animation: gradientShift 20s ease infinite;
+      z-index: 0;
+    }
+    
+    @keyframes gradientShift {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(10%, 10%) rotate(180deg); }
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(17, 17, 34, 0.85);
+      backdrop-filter: blur(20px);
+      border-radius: 30px;
+      box-shadow: 0 30px 90px rgba(138, 43, 226, 0.4),
+                  0 0 0 1px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #8a2be2 0%, #ff00ff 50%, #00bfff 100%);
+      color: white;
+      padding: 60px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="white" opacity="0.2"/></svg>');
+      opacity: 0.3;
+      animation: float 30s linear infinite;
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-100px); }
+    }
+    
+    .header h1 {
+      font-size: 48px;
+      margin-bottom: 15px;
+      font-weight: 800;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      letter-spacing: -1px;
+    }
+    
+    .header p {
+      font-size: 20px;
+      opacity: 0.95;
+      position: relative;
+      z-index: 1;
+      font-weight: 300;
+    }
+    
+    .badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      color: white;
+      padding: 8px 20px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      position: relative;
+      z-index: 1;
+    }
+    
+    .content {
+      padding: 50px 40px;
+    }
+    
+    .section-title {
+      color: #fff;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: linear-gradient(180deg, #8a2be2, #ff00ff);
+      border-radius: 2px;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    
+    label {
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #c7c7ff;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.3px;
+    }
+    
+    .icon {
+      font-size: 18px;
+      filter: drop-shadow(0 0 8px rgba(138, 43, 226, 0.6));
+    }
+    
+    input, select, textarea {
+      padding: 15px 18px;
+      border: 2px solid rgba(138, 43, 226, 0.3);
+      background: rgba(30, 30, 50, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      font-size: 15px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: inherit;
+      color: #fff;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #8a2be2;
+      background: rgba(30, 30, 50, 0.8);
+      box-shadow: 0 0 0 4px rgba(138, 43, 226, 0.2),
+                  0 8px 30px rgba(138, 43, 226, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    input::placeholder {
+      color: rgba(199, 199, 255, 0.4);
+    }
+    
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url('data:image/svg+xml,<svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L6 6L11 1" stroke="%238a2be2" stroke-width="2" stroke-linecap="round"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 15px center;
+      padding-right: 45px;
+    }
+    
+    select option {
+      background: #1e1e32;
+      color: #fff;
+      padding: 10px;
+    }
+    
+    .advanced-toggle {
+      background: linear-gradient(135deg, rgba(138, 43, 226, 0.2) 0%, rgba(255, 0, 255, 0.2) 100%);
+      border: 2px solid rgba(138, 43, 226, 0.4);
+      padding: 16px 24px;
+      border-radius: 15px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #fff;
+      transition: all 0.3s;
+      margin: 20px 0;
+      width: 100%;
+      font-size: 16px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .advanced-toggle:hover {
+      background: linear-gradient(135deg, rgba(138, 43, 226, 0.3) 0%, rgba(255, 0, 255, 0.3) 100%);
+      border-color: #8a2be2;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(138, 43, 226, 0.3);
+    }
+    
+    .advanced-section {
+      display: none;
+      margin-top: 20px;
+      padding: 30px;
+      background: rgba(30, 30, 50, 0.4);
+      border: 2px solid rgba(138, 43, 226, 0.2);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .advanced-section.active {
+      display: block;
+      animation: slideDown 0.3s ease;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .generate-btn {
+      background: linear-gradient(135deg, #8a2be2 0%, #ff00ff 50%, #00bfff 100%);
+      color: white;
+      border: none;
+      padding: 22px 50px;
+      border-radius: 15px;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 40px rgba(138, 43, 226, 0.5);
+      margin-top: 30px;
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.5px;
+    }
+    
+    .generate-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+    
+    .generate-btn:hover::before {
+      left: 100%;
+    }
+    
+    .generate-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 50px rgba(138, 43, 226, 0.6);
+    }
+    
+    .generate-btn:active {
+      transform: translateY(-1px);
+    }
+    
+    .output-section {
+      margin-top: 50px;
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+    
+    .output-section.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    
+    .output-header h3 {
+      color: #fff;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    
+    .prompt-count {
+      background: linear-gradient(135deg, #8a2be2, #ff00ff);
+      color: white;
+      padding: 8px 18px;
+      border-radius: 25px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+    }
+    
+    .prompt-card {
+      background: rgba(30, 30, 50, 0.6);
+      border: 2px solid rgba(138, 43, 226, 0.3);
+      border-radius: 20px;
+      padding: 25px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .prompt-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #8a2be2, #ff00ff, #00bfff);
+    }
+    
+    .prompt-card:hover {
+      border-color: #8a2be2;
+      transform: translateX(5px);
+      box-shadow: 0 10px 40px rgba(138, 43, 226, 0.3);
+    }
+    
+    .prompt-title {
+      color: #ff00ff;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .prompt-number {
+      background: linear-gradient(135deg, #8a2be2, #ff00ff);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    
+    .prompt-text {
+      color: #c7c7ff;
+      line-height: 1.7;
+      font-size: 15px;
+      white-space: pre-wrap;
+    }
+    
+    .prompt-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .copy-prompt-btn {
+      background: rgba(138, 43, 226, 0.2);
+      border: 1px solid rgba(138, 43, 226, 0.4);
+      color: #c7c7ff;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+    
+    .copy-prompt-btn:hover {
+      background: rgba(138, 43, 226, 0.4);
+      border-color: #8a2be2;
+    }
+    
+    .action-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 25px;
+    }
+    
+    .copy-btn, .download-btn {
+      padding: 16px 28px;
+      border: none;
+      border-radius: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 16px;
+    }
+    
+    .copy-btn {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+    }
+    
+    .copy-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 35px rgba(16, 185, 129, 0.4);
+    }
+    
+    .download-btn {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    }
+    
+    .download-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 35px rgba(59, 130, 246, 0.4);
+    }
+    
+    .rating-section {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%);
+      border: 2px solid rgba(251, 191, 36, 0.3);
+      border-left: 4px solid #fbbf24;
+      padding: 25px;
+      border-radius: 20px;
+      margin-top: 30px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .rating-section h4 {
+      color: #fbbf24;
+      margin-bottom: 10px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    
+    .rating-section p {
+      color: #fcd34d;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+    
+    .stars {
+      display: flex;
+      gap: 12px;
+      margin-top: 15px;
+    }
+    
+    .star {
+      font-size: 32px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: rgba(251, 191, 36, 0.3);
+      filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.5));
+    }
+    
+    .star:hover, .star.active {
+      color: #fbbf24;
+      transform: scale(1.2) rotate(12deg);
+    }
+    
+    .footer {
+      background: rgba(15, 15, 30, 0.8);
+      padding: 40px;
+      text-align: center;
+      border-top: 1px solid rgba(138, 43, 226, 0.2);
+    }
+    
+    .footer p {
+      color: #c7c7ff;
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .social-proof {
+      display: flex;
+      justify-content: center;
+      gap: 50px;
+      margin-top: 25px;
+      flex-wrap: wrap;
+    }
+    
+    .stat {
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 32px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #8a2be2, #ff00ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      color: #c7c7ff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 5px;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      padding: 18px 28px;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(16, 185, 129, 0.5);
+      display: none;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .toast.show {
+      display: flex;
+      animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    .prompts-container {
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+    
+    .prompts-container::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .prompts-container::-webkit-scrollbar-track {
+      background: rgba(30, 30, 50, 0.4);
+      border-radius: 10px;
+    }
+    
+    .prompts-container::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #8a2be2, #ff00ff);
+      border-radius: 10px;
+    }
+    
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .action-buttons {
+        grid-template-columns: 1fr;
+      }
+      
+      .header h1 {
+        font-size: 32px;
+      }
+      
+      .header p {
+        font-size: 16px;
+      }
+      
+      .content {
+        padding: 30px 20px;
+      }
+      
+      .social-proof {
+        gap: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>⚡ QuickPrompts</h1>
+    <p>Generate Content Prompts in 30 Seconds, Not 30 Minutes</p>
+    <p style="font-size: 16px; margin-top: 10px;">Platform-optimized AI prompts for Instagram, LinkedIn, YouTube, Twitter & more • Works in 11+ Indian languages</p>
+    <span class="badge">🚀 100% Free • No Signup Required</span>
+  </div>
+  
+  <div class="content">
+    <div class="section-title">🎯 Essential Details</div>
+    
+    <div class="form-grid">
+      <div class="form-group">
+        <label><span class="icon">📱</span> Platform</label>
+        <select id="platform">
+          <option>Twitter / X</option>
+          <option>LinkedIn</option>
+          <option>Instagram</option>
+          <option>YouTube</option>
+          <option>Facebook</option>
+          <option>TikTok</option>
+          <option>Blog</option>
+          <option>Newsletter</option>
+          <option>Medium</option>
+          <option>Reddit</option>
+          <option>Threads</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label><span class="icon">💡</span> Topic / Niche</label>
+        <input id="topic" placeholder="e.g., AI for small businesses"/>
+      </div>
+      
+      <div class="form-group">
+        <label><span class="icon">👥</span> Target Audience</label>
+        <select id="audience">
+          <option value="">Select your audience...</option>
+          <option>Entrepreneurs</option>
+          <option>Small Business Owners</option>
+          <option>Freelancers</option>
+          <option>Students</option>
+          <option>Working Professionals</option>
+          <option>Tech Enthusiasts</option>
+          <option>Marketers</option>
+          <option>Content Creators</option>
+          <option>Developers</option>
+          <option>Designers</option>
+          <option>Stay-at-home Parents</option>
+          <option>Retirees</option>
+          <option>Gen Z</option>
+          <option>Millennials</option>
+          <option>Industry Experts</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label><span class="icon">🎨</span> Tone</label>
+        <select id="tone">
+          <option>Professional & authoritative</option>
+          <option>Friendly & conversational</option>
+          <option>Bold & confident</option>
+          <option>Educational & clear</option>
+          <option>Inspirational & motivating</option>
+          <option>Direct & no-nonsense</option>
+          <option>Casual & relatable</option>
+          <option>Sales-focused & persuasive</option>
+          <option>Marketing-driven & engaging</option>
+          <option>Storytelling & emotional</option>
+          <option>Data-driven & analytical</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label><span class="icon">🎯</span> Primary Goal</label>
+        <select id="goal">
+          <option>Grow audience</option>
+          <option>Build authority</option>
+          <option>Educate followers</option>
+          <option>Drive engagement</option>
+          <option>Generate leads</option>
+          <option>Increase sales</option>
+          <option>Spark discussion</option>
+          <option>Share knowledge</option>
+          <option>Brand awareness</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label><span class="icon">🌍</span> Language</label>
+        <select id="language">
+          <option>English</option>
+          <option>Hindi (हिंदी)</option>
+          <option>Hinglish (Hindi + English)</option>
+          <option>Bengali (বাংলা)</option>
+          <option>Telugu (తెలుగు)</option>
+          <option>Marathi (मराठी)</option>
+          <option>Tamil (தமிழ்)</option>
+          <option>Gujarati (ગુજરાતી)</option>
+          <option>Kannada (ಕನ್ನಡ)</option>
+          <option>Malayalam (മലയാളം)</option>
+          <option>Punjabi (ਪੰਜਾਬੀ)</option>
+          <option>Odia (ଓଡ଼ିଆ)</option>
+          <option>Spanish (Español)</option>
+          <option>French (Français)</option>
+          <option>German (Deutsch)</option>
+          <option>Portuguese (Português)</option>
+        </select>
+      </div>
+    </div>
+    
+    <button class="advanced-toggle" onclick="toggleAdvanced()">
+      ⚙️ Advanced Options (Optional)
+    </button>
+    
+    <div class="advanced-section" id="advancedSection">
+      <div class="section-title">🔧 Fine-tune Your Prompts</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label><span class="icon">📏</span> Content Length</label>
+          <select id="length">
+            <option>Platform optimal</option>
+            <option>Short & punchy</option>
+            <option>Medium depth</option>
+            <option>Long & detailed</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label><span class="icon">🎭</span> Content Style</label>
+          <select id="style">
+            <option>Balanced</option>
+            <option>Story-driven</option>
+            <option>Data-focused</option>
+            <option>Question-based</option>
+            <option>Listicle format</option>
+            <option>How-to focused</option>
+            <option>Case study approach</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label><span class="icon">📊</span> Number of Prompts</label>
+          <select id="promptCount">
+            <option value="10">10 prompts</option>
+            <option value="15">15 prompts</option>
+            <option value="20">20 prompts</option>
+            <option value="25">25 prompts</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label><span class="icon">🔥</span> Include Viral Hooks</label>
+          <select id="viralHooks">
+            <option>No</option>
+            <option>Yes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <button class="generate-btn" onclick="generatePrompts()">
+      ✨ Generate Beautiful Prompts
+    </button>
+    
+    <div class="output-section" id="outputSection">
+      <div class="output-header">
+        <h3>📝 Your Custom Prompts</h3>
+        <span class="prompt-count" id="promptCounter">10 Prompts</span>
+      </div>
+      
+      <div class="prompts-container" id="promptsContainer"></div>
+      
+      <div class="action-buttons">
+        <button class="copy-btn" onclick="copyAllText()">
+          📋 Copy All Prompts
+        </button>
+        <button class="download-btn" onclick="downloadPrompts()">
+          💾 Download as .txt
+        </button>
+      </div>
+      
+      <div class="rating-section">
+        <h4>👍 Love these prompts? Rate your experience!</h4>
+        <p>Your feedback helps us create better tools for creators</p>
+        <div class="stars" id="starRating">
+          <span class="star" onclick="rate(1)">★</span>
+          <span class="star" onclick="rate(2)">★</span>
+          <span class="star" onclick="rate(3)">★</span>
+          <span class="star" onclick="rate(4)">★</span>
+          <span class="star" onclick="rate(5)">★</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <p>Built with ❤️ for content creators worldwide • Empowering voices across all languages</p>
+    <div class="social-proof">
+      <div class="stat">
+        <div class="stat-number">15,000+</div>
+        <div class="stat-label">Prompts Generated</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">7,500+</div>
+        <div class="stat-label">Happy Creators</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">4.9★</div>
+        <div class="stat-label">Average Rating</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span>✓</span>
+  <span id="toastMessage">Success!</span>
+</div>
+
+<script>
+let currentRating = 0;
+let allPrompts = [];
+
+function toggleAdvanced() {
+  const section = document.getElementById('advancedSection');
+  section.classList.toggle('active');
+}
+
+function generatePrompts() {
+  const platform = document.getElementById("platform").value;
+  const topic = document.getElementById("topic").value;
+  const audienceSelect = document.getElementById("audience");
+  const audience = audienceSelect.options[audienceSelect.selectedIndex].text;
+  const tone = document.getElementById("tone").value;
+  const goal = document.getElementById("goal").value;
+  const language = document.getElementById("language").value;
+  const length = document.getElementById("length").value;
+  const style = document.getElementById("style").value;
+  const promptCount = parseInt(document.getElementById("promptCount").value);
+  const viralHooks = document.getElementById("viralHooks").value === "Yes";
+  
+  if (!topic || audienceSelect.selectedIndex === 0) {
+    showToast("⚠️ Please fill in Topic and select Target Audience", "#ef4444");
+    return;
+  }
+  
+  const langInstruction = language === "English" ? "" : `\n🌍 LANGUAGE: Write the entire post in ${language}.`;
+  const lengthInstruction = length !== "Platform optimal" ? `\n📏 Length: ${length}.` : "";
+  const styleInstruction = style !== "Balanced" ? `\n🎨 Style: ${style}.` : "";
+  
+  allPrompts = [];
+  
+  // TIER 1: High-Impact Conversion Prompts (Ratings: 9-10/10)
+  allPrompts.push({
+    title: "Problem-Agitate-Solution (PAS Framework)",
+    icon: "🎯",
+    text: `Write a ${platform} post using the PAS framework for "${topic}".${langInstruction}
+
+📱 Platform: ${platform}
+👥 Audience: ${audience}
+🎯 Goal: ${goal}
+🗣️ Tone: ${tone}${lengthInstruction}
+
+STRUCTURE:
+1. PROBLEM: Identify the exact pain point ${audience} faces with ${topic}
+2. AGITATE: Make them feel the cost of inaction (lost time, money, opportunities)
+3. SOLUTION: Present your approach as the clear path forward
+
+Include a specific call-to-action. Use emotional triggers. Make it impossible to ignore.`
+  });
+
+  allPrompts.push({
+    title: "Launch Announcement (AIDA Framework)",
+    icon: "🚀",
+    text: `Create a product/service launch post for "${topic}" on ${platform}.${langInstruction}
+
+👥 Target: ${audience}
+🎯 Goal: ${goal}
+🗣️ Tone: ${tone}
+
+AIDA FORMULA:
+- ATTENTION: Compelling hook about the transformation
+- INTEREST: Show unique value proposition
+- DESIRE: Paint the "after" picture - what changes for them
+- ACTION: Clear next step (link, DM, comment, etc.)
+
+Emphasize scarcity or urgency if applicable. Make them feel FOMO.`
+  });
+
+  allPrompts.push({
+    title: "Transformation Story (Before-After-Bridge)",
+    icon: "✨",
+    text: `Share a transformation story about "${topic}" for ${audience}.${langInstruction}
+
+📱 Platform: ${platform}
+🗣️ Tone: ${tone}
+🎯 Goal: ${goal}${styleInstruction}
+
+FRAMEWORK:
+- BEFORE: Describe the struggle (relatable pain)
+- AFTER: Show the achieved result (specific outcomes)
+- BRIDGE: Reveal what made the change possible
+
+Make it personal and emotional. Use concrete numbers/results. End with how others can achieve this too.`
+  });
+
+  allPrompts.push({
+    title: "Controversial Truth Bomb",
+    icon: "💣",
+    text: `Challenge a widely-accepted belief about "${topic}" on ${platform}.${langInstruction}
+
+👥 For: ${audience}
+🎯 Goal: ${goal}
+🗣️ Tone: ${tone}
+
+START WITH: "Unpopular opinion:" or "Everyone's doing [X] wrong. Here's why:"
+
+- State the controversial position boldly
+- Back it with 3 solid reasons or data points
+- Show why the alternative approach works better
+- Invite debate in comments
+
+Be provocative but defensible. Drive massive engagement.`
+  });
+
+  allPrompts.push({
+    title: "Mistake-Revelation Framework",
+    icon: "⚠️",
+    text: `Expose critical mistakes about "${topic}" that ${audience} might be making.${langInstruction}
+
+📱 Platform: ${platform}
+🎯 Goal: ${goal}
+🗣️ Tone: ${tone}${lengthInstruction}
+
+FORMAT: "I made [X mistake] with ${topic}. It cost me [specific consequence]. Here's what I do now:"
+
+List 3-5 mistakes with:
+- Why it's wrong
+- What it costs them
+- The correct approach
+- One quick win to implement today
+
+Be helpful, not preachy. Position yourself as someone who learned the hard way.`
+  });
+
+  // TIER 2: Authority & Trust Builders (Ratings: 8-9/10)
+  allPrompts.push({
+    title: "Ultimate Framework Post",
+    icon: "🗂️",
+    text: `Create "The [X]-Step Framework for ${topic}" post for ${platform}.${langInstruction}
+
+👥 Designed for: ${audience}
+🗣️ Tone: ${tone}
+🎯 Goal: ${goal}
+
+Build a 3-5 step framework where:
+- Each step is actionable and specific
+- Give one example/tactic per step
+- Make it bookmark-worthy
+- End with: "Which step are you implementing first?"
+
+Make it so valuable they save it. This is pillar content.`
+  });
+
+  allPrompts.push({
+    title: "Fresh Start Strategy",
+    icon: "🔄",
+    text: `"If I started ${topic} from zero today, here's my exact playbook."${langInstruction}
+
+📱 Platform: ${platform}
+👥 Audience: ${audience}
+🗣️ Tone: ${tone}${styleInstruction}
+
+STRUCTURE:
+- Day 1-7: [Specific actions]
+- Week 2-4: [Next phase]
+- Month 2-3: [Scale tactics]
+
+Be hyper-specific. No fluff. Include tools, resources, time estimates. Make it copy-paste actionable.`
+  });
+
+  allPrompts.push({
+    title: "Counterintuitive Insight",
+    icon: "🧠",
+    text: `Share a non-obvious truth about "${topic}" that ${audience} needs to know.${langInstruction}
+
+📱 Platform: ${platform}
+🎯 Goal: ${goal}
+🗣️ Tone: ${tone}
+
+PATTERN: "Everyone says [common advice]. But after [your experience], I learned [opposite approach] works better."
+
+- Challenge conventional wisdom
+- Explain WHY the opposite works
+- Give proof/example
+- Show how to apply it
+
+Make them think: "I never looked at it that way before."`
+  });
+
+  allPrompts.push({
+    title: "Data-Driven Authority Post",
+    icon: "📊",
+    text: `Create a stat-heavy post about "${topic}" on ${platform}.${langInstruction}
+
+👥 For: ${audience}
+🗣️ Tone: ${tone}
+🎯 Goal: ${goal}
+
+Include:
+- 3-5 surprising statistics or metrics
+- What each number means for ${audience}
+- One actionable insight per stat
+- Your interpretation/recommendation
+
+Make numbers tell a story. Turn data into decisions. Cite sources when possible.`
+  });
+
+  allPrompts.push({
+    title: "Behind-the-Scenes Reveal",
+    icon: "🎬",
+    text: `Pull back the curtain on "${topic}" - show what ${audience} doesn't see.${langInstruction}
+
+📱 Platform: ${platform}
+🗣️ Tone: ${tone}${lengthInstruction}
+
+REVEAL:
+- What really happens behind the scenes
+- The unsexy work nobody talks about
+- Actual time/effort required
+- Unexpected challenges
+- The real path to results
+
+Be brutally honest. Destroy myths. Build trust through transparency.`
+  });
+
+  // Additional prompts for higher counts
+  if (promptCount >= 15) {
+    // TIER 3: Engagement & Community Builders (Ratings: 7-8/10)
+    allPrompts.push({
+      title: "Personal Journey Story",
+      icon: "📖",
+      text: `Share your authentic experience with "${topic}".${langInstruction}
+      
+📱 Platform: ${platform}
+👥 Lesson for: ${audience}
+🗣️ Tone: ${tone}${styleInstruction}
+
+STORY ARC:
+- Where you started (relatable struggle)
+- The turning point (aha moment)
+- What you learned (specific lesson)
+- Current results (proof it works)
+- What you'd tell your past self
+
+Be vulnerable. Show the messy middle. Make it inspiring yet realistic.`
+    });
+
+    allPrompts.push({
+      title: "Quick Win Generator",
+      icon: "⚡",
+      text: `Give ${audience} one small action for "${topic}" with immediate results.${langInstruction}
+      
+📱 Platform: ${platform}
+🗣️ Tone: ${tone}
+🎯 Goal: ${goal}
+
+TEMPLATE: "Want a quick win with ${topic}? Do this one thing in the next 10 minutes:"
+
+- Make it ridiculously simple
+- Guarantee a result
+- Explain why it works
+- Time-box it (under 10-15 minutes)
+- Add: "Do this now and comment your result!"
+
+Give them a dopamine hit. Build momentum.`
+    });
+
+    allPrompts.push({
+      title: "Myth-Busting Exposé",
+      icon: "🚫",
+      text: `Debunk a dangerous myth about "${topic}" on ${platform}.${langInstruction}
+      
+👥 For: ${audience}
+🗣️ Tone: ${tone}
+🎯 Goal: ${goal}
+
+FORMAT: "Stop believing this lie about ${topic}: [myth]"
+
+- State the myth clearly
+- Show why it's wrong (evidence/experience)
+- Reveal the truth
+- Explain what to do instead
+- Call out who benefits from this myth
+
+Be bold. Protect your audience from bad advice.`
+    });
+
+    allPrompts.push({
+      title: "Comparison Breakdown",
+      icon: "⚖️",
+      text: `Compare two popular approaches to "${topic}".${langInstruction}
+      
+📱 Platform: ${platform}
+👥 Help ${audience} choose wisely
+🗣️ Tone: ${tone}${lengthInstruction}
+
+STRUCTURE:
+Option A vs Option B
+
+For each:
+- Best for: [audience type]
+- Pros: [3 specific advantages]
+- Cons: [3 honest drawbacks]  
+- When to choose this
+- My recommendation: [clear stance]
+
+Be balanced but opinionated. Help them make the right choice.`
+    });
+
+    allPrompts.push({
+      title: "Future-Focused Prediction",
+      icon: "🔮",
+      text: `Share where "${topic}" is heading in the next 12-24 months.${langInstruction}
+      
+📱 Platform: ${platform}
+👥 For: ${audience}
+🗣️ Tone: ${tone}
+
+PREDICT:
+- 3 major trends emerging
+- What's dying/becoming obsolete
+- Where smart money is moving
+- How ${audience} should prepare NOW
+- One action to stay ahead
+
+Back predictions with logic and early signals. Position them to win.`
+    });
+  }
+
+  if (promptCount >= 20) {
+    // TIER 4: Resource & Tactical Posts (Ratings: 7-8/10)
+    allPrompts.push({
+      title: "Resource Stack Reveal",
+      icon: "🛠️",
+      text: `Share your essential tool stack for "${topic}".${langInstruction}
+      
+📱 Platform: ${platform}
+👥 For: ${audience}
+🗣️ Tone: ${tone}
+
+LIST FORMAT:
+For each tool/resource:
+- What it does
+- Why you use it over alternatives
+- Specific use case
+- Free vs paid
+- Your honest review (pros/cons)
+
+End with: "What's your #1 tool for this? Drop it below 👇"
+
+Make it actionable. Save them research time.`
+    });
+
+    allPrompts.push({
+      title: "Case Study Deep-Dive",
+      icon: "🔍",
+      text: `Analyze a real success story related to "${topic}".${langInstruction}
+      
+📱 Platform: ${platform}
+👥 Extract lessons for: ${audience}
+🗣️ Tone: ${tone}${styleInstruction}
+
+BREAKDOWN:
+- The situation/challenge
+- Strategy used (specific tactics)
+- Timeline and resources
+- Results (quantified)
+- 3 lessons ${audience} can steal
+- What would you do differently
+
+Show the playbook. Make success repeatable.`
+    });
+
+    allPrompts.push({
+      title: "Beginner-to-Expert Roadmap",
+      icon: "🗺️",
+      text: `Create a clear progression path for "${topic}".${langInstruction}
+      
+📱 Platform: ${platform}
+👥 Guide for: ${audience}
+🗣️ Tone: ${tone}
+
+ROADMAP:
+Level 1 (Beginner): Focus on [X], avoid [Y]
+Level 2 (Intermediate): Now add [Z], optimize [A]  
+Level 3 (Advanced): Master [B], teach others [C]
+
+For each level:
+- Time estimate
+- Key skills to develop
+- Common pitfalls
+- When you're ready to level up
+
+Give them a clear path. Show where they are and where they're going.`
+    });
+
+    allPrompts.push({
+      title: "Challenge/Sprint Post",
+      icon: "🏃",
+      text: `Launch a focused challenge around "${topic}" on ${platform}.${langInstruction}
+      
+👥 Designed for: ${audience}
+🗣️ Tone: ${tone}
+🎯 Goal: ${goal}
+
+CHALLENGE FORMAT:
+"[X]-Day ${topic} Challenge"
+
+- Clear objective (what they'll achieve)
+- Daily actions (specific tasks)
+- How to track progress
+- Accountability method (comment updates, hashtag)
+- Prize/reward (even if just recognition)
+
+Make it exciting. Create FOMO. Build community through participation.`
+    });
+
+    allPrompts.push({
+      title: "High-Engagement Question Post",
+      icon: "💬",
+      text: `Ask an irresistible question about "${topic}" on ${platform}.${langInstruction}
+      
+👥 Designed for: ${audience}
+🎯 Goal: ${goal}
+🗣️ Tone: ${tone}
+
+QUESTION FORMATS:
+- "What's your [biggest struggle/win] with ${topic}?"
+- "If you could change one thing about ${topic}, what would it be?"
+- "Hot take: [controversial statement about topic]. Agree or disagree?"
+- "This or that: [Option A] vs [Option B]?"
+
+Add context. Share your answer first. Engage with every response.`
+    });
+  }
+
+  if (promptCount >= 25) {
+    // TIER 5: Advanced & Specialized Content (Ratings: 6-8/10)
+    allPrompts.push({
+      title: "Powerful Analogy Explainer",
+      icon: "🌟",
+      text: `Explain "${topic}" using a memorable analogy on ${platform}.${langInstruction}
+      
+👥 Make it click for: ${audience}
+🗣️ Tone: ${tone}
+
+PATTERN: "${topic} is like [relatable thing]..."
+
+- Choose a universally understood analogy
+- Map key concepts 1:1
+- Explain why the comparison works
+- Show how the analogy helps them understand
+- Extend the metaphor to cover complexities
+
+Make the complex suddenly simple. Create that "aha!" moment.`
+    });
+
+    allPrompts.push({
+      title: "Unpopular Opinion Series",
+      icon: "🎭",
+      text: `Share your most controversial take on "${topic}".${langInstruction}
+      
+📱 Platform: ${platform}
+👥 For: ${audience}
+🗣️ Tone: ${tone}
+
+START: "Unpopular opinion about ${topic}:"
+
+- State your contrarian position clearly
+- Explain your reasoning (3 points)
+- Address the obvious counterargument
+- Show proof/experience
+- Invite civil debate: "Change my mind 👇"
+
+Be brave. Stand for something. Attract your tribe while repelling others.`
+    });
+
+    allPrompts.push({
+      title: "Industry Update/News Breakdown",
+      icon: "📰",
+      text: `Break down recent developments in "${topic}".${langInstruction}
+      
+📱 Platform: ${platform}
+👥 Why it matters to: ${audience}
+🗣️ Tone: ${tone}
+
+FORMAT:
+"Big news in ${topic}: [What happened]"
+
+- Summarize the development
+- Cut through the hype (what it really means)
+- Impact on ${audience} (opportunities/threats)
+- Action items (what to do about it)
+- Your prediction on where this leads
+
+Be the trusted interpreter. Turn news into strategy.`
+    });
+
+    allPrompts.push({
+      title: "Encouragement & Motivation",
+      icon: "🤗",
+      text: `Motivate ${audience} struggling with "${topic}".${langInstruction}
+      
+📱 Platform: ${platform}
+🗣️ Tone: ${tone}
+🎯 Goal: ${goal}
+
+STRUCTURE:
+"To everyone struggling with ${topic} right now:"
+
+- Acknowledge their struggle (validation)
+- Share that you've been there too
+- Remind them why they started
+- Give 1-2 practical next steps
+- Offer perspective on the journey
+- End with belief: "You've got this."
+
+Be genuine. Provide hope AND tactics. Make them feel seen.`
+    });
+
+    allPrompts.push({
+      title: "Expert Interview Questions",
+      icon: "🎤",
+      text: `Create 5 powerful interview questions about "${topic}".${langInstruction}
+      
+📱 For ${platform} interview format
+👥 Audience: ${audience}
+🗣️ Tone: ${tone}
+
+QUESTIONS that reveal:
+1. [Uncommon insight about the field]
+2. [Biggest mistake they see people make]
+3. [Contrarian approach they use]
+4. [What's changing in ${topic} that others miss]
+5. [Their #1 advice for ${audience}]
+
+Design questions that extract gold. Make the answers bookmark-worthy.`
+    });
+  }
+
+  // Display prompts
+  displayPrompts(allPrompts.slice(0, promptCount), viralHooks, platform, topic, langInstruction);
+  
+  document.getElementById("outputSection").classList.add("active");
+  document.getElementById("promptCounter").textContent = `${promptCount} Prompts${viralHooks ? ' + Viral Hooks' : ''}`;
+  
+  document.getElementById("outputSection").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  
+  showToast(`✨ ${promptCount} beautiful prompts generated!`);
+}
+
+function displayPrompts(prompts, includeHooks, platform, topic, langInstruction) {
+  const container = document.getElementById("promptsContainer");
+  container.innerHTML = "";
+  
+  prompts.forEach((prompt, index) => {
+    const card = document.createElement("div");
+    card.className = "prompt-card";
+    card.innerHTML = `
+      <div class="prompt-title">
+        <span class="prompt-number">${index + 1}</span>
+        <span>${prompt.icon} ${prompt.title}</span>
+      </div>
+      <div class="prompt-text">${prompt.text}</div>
+      <div class="prompt-actions">
+        <button class="copy-prompt-btn" onclick="copySinglePrompt(${index})">
+          📋 Copy This Prompt
+        </button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+  
+  if (includeHooks) {
+    const hooksCard = document.createElement("div");
+    hooksCard.className = "prompt-card";
+    hooksCard.style.background = "linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(249, 115, 22, 0.1))";
+    hooksCard.style.borderColor = "rgba(239, 68, 68, 0.4)";
+    hooksCard.innerHTML = `
+      <div class="prompt-title">
+        <span class="prompt-number">🔥</span>
+        <span>💥 BONUS: 20 Viral Hook Templates for ${platform}</span>
+      </div>
+      <div class="prompt-text">Copy-paste these proven hooks to 10x your ${topic} content engagement:${langInstruction}
+
+═══════════════════════════════════════════════════════════════════════
+
+🎯 ATTENTION-GRABBING HOOKS:
+
+1. "Everyone talks about ${topic}, but nobody mentions [the truth that changes everything]..."
+
+2. "I spent [X time/money] learning ${topic}. Here's what actually matters:"
+
+3. "The ${topic} advice you're getting is mostly wrong. Here's why:"
+
+4. "I ignored ${topic} for years. It cost me [specific loss]. Here's what I learned:"
+
+5. "Stop doing [common practice] for ${topic}. Do this instead:"
+
+═══════════════════════════════════════════════════════════════════════
+
+💣 CONTROVERSY & CONTRARIAN HOOKS:
+
+6. "Unpopular opinion: ${topic} is overrated. Here's what works better:"
+
+7. "Most people think ${topic} is about [X]. It's actually about [Y]."
+
+8. "The ${topic} industry doesn't want you to know this:"
+
+9. "I tried every ${topic} strategy. Only this one actually worked:"
+
+10. "[Number] lies about ${topic} that are keeping you stuck:"
+
+═══════════════════════════════════════════════════════════════════════
+
+🚀 TRANSFORMATION & RESULTS HOOKS:
+
+11. "How I went from [bad situation] to [great result] using ${topic}:"
+
+12. "This ${topic} strategy made me [specific result] in [timeframe]:"
+
+13. "Before ${topic}: [struggle]. After ${topic}: [success]. Here's how:"
+
+14. "I was terrible at ${topic}. Then I discovered this:"
+
+15. "${topic} changed my life when I stopped [X] and started [Y]:"
+
+═══════════════════════════════════════════════════════════════════════
+
+🎁 VALUE & TEACHING HOOKS:
+
+16. "You don't need [expensive thing] for ${topic}. You need these 3 things:"
+
+17. "[Number] things I wish I knew about ${topic} before I started:"
+
+18. "If you're struggling with ${topic}, read this:"
+
+19. "The only ${topic} guide you'll ever need (saved me [X time/money]):"
+
+20. "Master ${topic} in [timeframe] with this simple framework:"
+
+═══════════════════════════════════════════════════════════════════════
+
+💡 PRO TIPS FOR MAXIMUM ENGAGEMENT:
+
+✅ Open with curiosity gaps - make them NEED to read more
+✅ Use specific numbers and timeframes (builds credibility)
+✅ Include personal stakes (what you lost/gained)
+✅ Promise clear transformation or value
+✅ Match the hook to your content promise
+✅ Test different hooks for the same content
+
+Mix and match these hooks with your prompts above for explosive engagement!</div>
+      <div class="prompt-actions">
+        <button class="copy-prompt-btn" onclick="copySinglePrompt(${prompts.length})">
+          📋 Copy All Viral Hooks
+        </button>
+      </div>
+    `;
+    container.appendChild(hooksCard);
+  }
+}
+
+function copySinglePrompt(index) {
+  const cards = document.querySelectorAll('.prompt-card');
+  const promptText = cards[index].querySelector('.prompt-text').textContent;
+  
+  const textarea = document.createElement('textarea');
+  textarea.value = promptText;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+  
+  showToast(`📋 Prompt ${index + 1} copied!`);
+}
+
+function copyAllText() {
+  const cards = document.querySelectorAll('.prompt-card');
+  let allText = "";
+  
+  cards.forEach((card, index) => {
+    const title = card.querySelector('.prompt-title').textContent.trim();
+    const text = card.querySelector('.prompt-text').textContent;
+    allText += `${title}\n${text}\n\n${"=".repeat(80)}\n\n`;
+  });
+  
+  const textarea = document.createElement('textarea');
+  textarea.value = allText;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+  
+  showToast("📋 All prompts copied to clipboard!");
+}
+
+function downloadPrompts() {
+  const cards = document.querySelectorAll('.prompt-card');
+  let allText = "QUICKPROMPTS - Generated Content Prompts\n";
+  allText += "=".repeat(80) + "\n\n";
+  
+  cards.forEach((card, index) => {
+    const title = card.querySelector('.prompt-title').textContent.trim();
+    const text = card.querySelector('.prompt-text').textContent;
+    allText += `${title}\n${text}\n\n${"=".repeat(80)}\n\n`;
+  });
+  
+  const platform = document.getElementById("platform").value;
+  const topic = document.getElementById("topic").value;
+  
+  const blob = new Blob([allText], { type: 'text/plain;charset=utf-8' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${platform}-${topic}-prompts.txt`.replace(/[^a-z0-9.-]/gi, '-').toLowerCase();
+  a.click();
+  window.URL.revokeObjectURL(url);
+  
+  showToast("💾 Prompts downloaded successfully!");
+}
+
+function rate(stars) {
+  currentRating = stars;
+  const starElements = document.querySelectorAll('.star');
+  starElements.forEach((star, index) => {
+    if (index < stars) {
+      star.classList.add('active');
+    } else {
+      star.classList.remove('active');
+    }
+  });
+  showToast(`⭐ Thank you for your ${stars}-star rating!`);
+}
+
+function showToast(message, color = "#10b981") {
+  const toast = document.getElementById("toast");
+  const toastMessage = document.getElementById("toastMessage");
+  toastMessage.textContent = message;
+  toast.style.background = color === "#10b981" ? "linear-gradient(135deg, #10b981, #059669)" : `linear-gradient(135deg, ${color}, ${color})`;
+  toast.classList.add("show");
+  
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000);
+}
+</script>
+
+</body>
+</html>
